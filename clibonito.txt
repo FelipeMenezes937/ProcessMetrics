@@ -1,0 +1,232 @@
+Crafting Beautiful and Effective Command Line Interfaces
+By
+April 30, 2024
+As developers, it‘s easy to focus solely on the functionality of the programs we build. But for command line applications, the interface through which users interact with our code is equally important. An attractive, intuitive, and well-structured CLI can significantly boost the usability and enjoyment of your app.
+
+In this post, we‘ll explore the fundamentals of good CLI design and dive into some practical techniques to take your app‘s interface to the next level. While we‘ll focus on examples in Ruby, the principles apply no matter what language you‘re working in.
+
+Why Care About CLI Design?
+Before diving into the how, it‘s worth considering why it‘s important to craft an appealing command line interface:
+
+Usability: A well-designed CLI makes your app more intuitive and easier to navigate. Users can focus on their task rather than struggling to understand how to use your program.
+
+Efficiency: By providing clear options, sensible defaults, and minimizing required input, you can streamline usage of your app. A thoughtful CLI helps users get more done in less time.
+
+Engagement: An attractive, polished interface makes your app memorable and more pleasant to use. Small touches like color, formatting, and interactive elements can make a text-based interface feel richer.
+
+Reduced Errors: Validating user input, providing helpful error messages, and guiding users through complex workflows all help minimize mistakes and frustration.
+
+At the end of the day, the goal is to make your program as frictionless and enjoyable to use as possible. Now let‘s look at how to achieve that.
+
+Principles of Good CLI Design
+What separates a great command line interface from a mediocre one? While the specifics vary depending on your app‘s purpose, there are some universal principles to strive for:
+
+Clarity: Make the purpose and usage of your app immediately clear. Users should be able to tell at a glance what your program does and how to use it.
+
+Discoverability: Provide an obvious way to view available commands and options, either through menus, help flags, or usage instructions. Don‘t leave users guessing what‘s possible.
+
+Consistency: Establish and adhere to clear patterns for how options are named, input is prompted, and output is formatted. A predictable interface is easier to learn.Learning Platforms
+
+Efficiency: Minimize the time and effort needed to accomplish tasks. Provide sensible defaults, shortcuts for common actions, and don‘t prompt for unnecessary input.
+
+Feedback: Acknowledge user actions and provide clear, actionable error messages. Keep users informed of what‘s happening, especially for long-running operations.
+
+With those guiding principles in mind, let‘s look at some concrete ways to put them into practice.
+
+Enhancing Appearance with Formatting
+Compared to a graphical interface, a command line app might seem visually limited. But there‘s actually a lot you can do to make your CLI output more attractive and easier to parse.
+
+Colors
+One of the easiest ways to spruce up your interface is by adding color. Colorizing important messages, headers, or specific data points helps them stand out and adds visual interest.
+
+In Ruby, you can use the Colorize gem to easily add colored output to your strings:
+
+require ‘colorize‘
+
+puts "This is blue".colorize(:blue)
+puts "This is light blue with red background".colorize(:light_blue ).colorize( :background => :red)
+puts "This is bold green".colorize(:green).bold
+Use colors judiciously to highlight, not overwhelm. Establish a consistent color scheme, such as always using red for errors and green for success messages.
+
+Text Styles
+In addition to color, you can also apply text styles like bold, italic, or underline to add emphasis or differentiate elements.
+
+Colorize supports bold and italic styles:
+
+puts "This is bold italic blue".colorize(:blue).bold.italic
+For even more options, check out the TTY::Text gem which lets you apply styles like underline, strikethrough, and custom text and background colors.
+
+Tables and Boxes
+When displaying tabular data or grouping related information, using ASCII tables and boxes can make your output much more readable.
+
+The TTY::Table library makes it dead simple to render text tables in your CLI:
+
+table = TTY::Table.new [‘Header 1‘,‘Header 2‘], [[‘a1‘, ‘a2‘], [‘b1‘, ‘b2‘]]
+puts table.render(:ascii)
+This would output:
+
++----------+----------+
+| Header 1 | Header 2 |
++----------+----------+
+| a1       | a2       |
+| b1       | b2       |
++----------+----------+
+There‘s also TTY::Box for wrapping content in various ASCII frames.
+
+Interactivity and User Input
+A command line interface isn‘t just about displaying output – it‘s an interactive medium. There are many ways you can make your CLI feel more dynamic and engaging.
+
+Prompts and Menus
+Instead of requiring users to provide all arguments upfront, you can interactively prompt them for input as needed. The HighLine gem is great for this, supporting features like asking questions, masking passwords, and providing default answers:
+
+require ‘highline/import‘
+
+name = ask("What is your name?  ") { |q| q.default = "Stranger" }
+password = ask("Enter your password:  ") { |q| q.echo = "." }
+For selecting from a list of options, HighLine supports simple menus:
+
+cli = HighLine.new
+answer = cli.choose do |menu|
+  menu.prompt = "Please choose an option:  "
+  menu.choice(:Load) { load_file }
+  menu.choice(:Save) { save_file }
+  menu.choice(:Quit) { exit }
+end
+An even more full-featured solution is TTY::Prompt which supports more complex multi-select and paginated menus.
+
+Input Validation
+To catch errors early and avoid garbage input, you‘ll want to validate user-provided values. HighLine supports validations with regex or lambda expressions:
+
+cli = HighLine.new
+email = cli.ask("Email:  ") { |q| q.validate = /\A\w+@\w+\.\w+\Z/ }
+age = cli.ask("Age:  ", Integer) { |q| q.in = 0..105 }
+Autocomplete
+For commands or arguments with a fixed set of possible values, providing autocompletion can speed up input and reduce mistakes. Check out the readline library:
+
+require ‘readline‘
+
+COMMANDS = %w{start stop exit}
+Readline.completion_append_character = " "
+Readline.completion_proc = proc { |s| COMMANDS.grep(/^#{Regexp.escape(s)}/) }
+
+while line = Readline.readline(‘> ‘, true)
+  # Process command
+end
+Progress and Status
+For operations that may take a while, it‘s important to provide feedback to the user about what‘s happening. A couple ways to do this are with progress bars and spinners.
+
+Progress Bars
+The Ruby/ProgressBar library provides an easy to use yet highly customizable progress bar:
+
+require ‘ruby-progressbar‘
+
+progressbar = ProgressBar.create(:total => file_count)
+files.each do |file|
+  # Process file
+  progressbar.increment
+end
+This would display an updating progress bar like:
+
+Progress: |============================                   | 64% Time: 00:00:12
+Spinners
+For indeterminate operations where progress can‘t be quantified, a simple spinner provides feedback that the program is still working. The TTY::Spinner gem makes this easy:
+
+require ‘tty-spinner‘
+spinner = TTY::Spinner.new
+spinner.auto_spin
+# Do work...
+spinner.stop(‘Done!‘)
+Providing Help and Guidance
+Even the most intuitive CLI will need to provide some guidance on usage, options, and arguments. A few ways to deliver this:
+
+Help Flags
+Conventionally, CLI apps support flags like -h or --help to display usage instructions. When your app starts, check for these flags and display help text if present:
+
+if ARGV.include?(‘-h‘) || ARGV.include?(‘--help‘)
+  puts "Usage: myapp [options]"
+  puts "  -i, --input FILE    Input file path"
+  puts "  -v, --verbose       Enable verbose output"
+  exit
+end
+Man Pages
+For more complex apps, you may want to provide a separate manual page with detailed documentation. You can write these in Markdown format and use a tool like Ronn to convert them to the standard man page format.
+
+Contextual Help
+Depending on your app, it may also be helpful to provide contextual help messages. For example, if the user tries a command that isn‘t recognized, suggest similar valid commands. Or prompt them with valid options when input is required.
+
+Putting It All Together
+Armed with these techniques, let‘s look at an example of incrementally improving a simple Ruby CLI app. Imagine we start with this:
+
+puts "Welcome to TodoCLI!"
+puts "Enter a command (add, ls, done):"
+command = gets.chomp
+
+case command
+when "add"
+  puts "Enter a todo:"
+  todo = gets.chomp
+  puts "Added ‘#{todo}‘"
+when "ls"
+  puts "No todos yet"
+when "done"
+  puts "Goodbye!"
+  exit
+else
+  puts "Invalid command ‘#{command}‘"
+end
+Pretty bare bones. Just using puts for output and gets for input. Let‘s spruce it up with some of our techniques.
+
+First, let‘s colorize some of the key text:
+
+require "colorize"
+
+puts "Welcome to " + "TodoCLI".colorize(:blue).bold + "!"
+puts "Enter a " + "command".colorize(:green) + " (add, ls, done):"
+Next, we can use HighLine to provide a better prompt for the command and validate the input:
+
+require "highline/import"
+
+cli = HighLine.new
+command = cli.ask("Enter a command (add, ls, done):  ") do |q|
+  q.validate = /\A(add|ls|done)\Z/
+  q.responses[:not_valid] = "Enter a valid command (add, ls, done)."
+end
+In the ‘add‘ case, we can provide a better Todo prompt and display the added item in a box:
+
+require "tty-box"
+
+when "add"
+  todo = cli.ask("Enter a todo:  ")
+  puts TTY::Box.frame "Added #{todo}", padding: 1, align: :center
+The ‘ls‘ case could display the todos in a table format using TTY::Table:
+
+require "tty-table"
+
+when "ls"
+  if todos.empty?
+    puts "No todos yet"
+  else
+    table = TTY::Table.new(todos.map { |todo| [todo] })
+    puts table.render(:ascii)
+  end
+Finally, let‘s provide help documentation if ‘-h‘ is passed:
+
+if ARGV.include?(‘-h‘)
+  puts "TodoCLI - Simple todo app"
+  puts "Usage: todo [command]"
+  puts "Commands:"
+  puts "  add - Add a new todo"
+  puts "  ls  - List all todos"
+  puts "  done - Exit the program"
+  exit
+end
+With just a handful of small changes leveraging some useful libraries, we‘ve dramatically improved the output formatting, input handling, and overall user experience of this little CLI app.
+
+Wrapping Up
+Building a great CLI is a combination of applying timeless design principles with specific technical enhancements and flourishes. But it‘s also important not to go overboard – an attractive CLI should still be a means to an end, not an end in itself.
+
+Focus first on clarity, efficiency, and meeting your users‘ needs. Then judiciously apply the visual and interactive enhancements we‘ve covered to polish the user experience. Always strive for a balance between form and function.
+
+Hopefully this overview has provided some inspiration and practical techniques for crafting your own beautiful command line interfaces. For related hands-on practice, check out Flatiron‘s Jukebox CLI Lab in Ruby and the TTY Prompt Lab.
+
+Above all, have fun making your CLIs a joy to use! The command line doesn‘t have to be dull. With a bit of thought and creativity, you can build CLI apps that are both powerful and a pleasure to interact with.
